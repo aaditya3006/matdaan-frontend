@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Matdaan | Admin Official Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+        :root {
+            --primary-blue: #0d47a1;
+            --accent-blue: rgba(13, 71, 161, 0.1);
+            --text-main: #2c3e50;
+            --bg-body: #f4f7f9;
+            --card-bg: #ffffff;
+            --border-color: #d1d8e0;
+            --input-bg: #fdfdfd;
+            --success: #27ae60;
+        }
+
+        * { box-sizing: border-box; font-family: 'Outfit', sans-serif; transition: all 0.3s ease; }
+        body { 
+            margin: 0; padding: 40px 20px; background: var(--bg-body); color: var(--text-main); 
+            min-height: 100vh;
+        }
+
+        .reg-container {
+            max-width: 900px; margin: 0 auto; background: var(--card-bg);
+            border-radius: 30px; border: 1px solid var(--border-color);
+            padding: 50px; box-shadow: 0 20px 60px rgba(0,0,0,0.05);
+        }
+
+        .header-section { text-align: center; margin-bottom: 40px; }
+        .header-section h1 { color: var(--primary-blue); font-size: 32px; margin: 0; font-weight: 800; }
+        .header-section p { font-size: 14px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .full-width { grid-column: span 2; }
+
+        .form-section { margin-bottom: 35px; }
+        .section-title { 
+            font-size: 14px; color: var(--primary-blue); font-weight: 800; 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .section-title::after { content: ""; flex: 1; height: 1px; background: var(--border-color); }
+
+        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #555; }
+        input, select, textarea {
+            width: 100%; padding: 12px 18px; background: var(--input-bg);
+            border: 1px solid var(--border-color); border-radius: 12px;
+            color: var(--text-main); font-size: 14px; outline: none;
+        }
+        input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px var(--accent-blue); }
+
+        /* Profile Photo Preview */
+        .photo-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .photo-upload {
+            width: 120px; height: 120px; border-radius: 50%; border: 2px dashed var(--primary-blue);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            overflow: hidden; background: var(--accent-blue); position: relative;
+        }
+        .photo-upload img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-upload i { font-size: 30px; color: var(--primary-blue); position: absolute; }
+
+        .permission-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
+            background: #f9f9f9; padding: 20px; border-radius: 15px; border: 1px solid #eee;
+        }
+        .perm-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .perm-item input { width: auto; margin: 0; cursor: pointer; }
+
+        .btn-submit {
+            width: 100%; padding: 18px; background: var(--primary-blue);
+            border: none; border-radius: 15px; color: white; font-weight: 800;
+            font-size: 16px; cursor: pointer; margin-top: 30px;
+        }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Verification Modal */
+        #verifyModal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-card {
+            background: white; width: 90%; max-width: 600px; padding: 40px; border-radius: 25px;
+            max-height: 85vh; overflow-y: auto;
+        }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .summary-item { font-size: 13px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+        .summary-item strong { color: var(--primary-blue); display: block; font-size: 11px; text-transform: uppercase; }
+        
+        .modal-actions { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-edit { flex: 1; background: #eee; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; }
+        .btn-proceed { flex: 2; background: var(--success); color: white; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+
+    <div class="reg-container">
+        <div class="header-section">
+            <h1>ADMIN REGISTRATION</h1>
+            <p>Onboarding for Secure Ledger Authority</p>
+        </div>
+
+        <form id="adminRegForm">
+            <div class="form-section">
+                <div class="section-title"><i class="fa-solid fa-user-gear"></i> 1. Basic Identity</div>
+                <div class="photo-container">
+                    <div class="photo-upload" onclick="document.getElementById('profileFile').click()" id="photoPreview">
+                        <i class="fa-solid fa-camera" id="camIcon"></i>
+                    </div>
+                    <label style="margin-top: 10px;">Click to upload Profile Photo</label>
+                    <input type="file" id="profileFile" hidden accept="image/*" required onchange="previewImage(this)">
+                </div>
+                <div class="form-grid">
+                    <div><label>Full Name</label><input type="text" id="fullName" placeholder="Rahul Sharma" required></div>
+                    <div><label>Username</label><input type="text" id="username" placeholder="unique_admin_id" required></div>
+                    <div>
+                        <label>Gender</label>
+                        <select id="gender" required>
+                            <option value="">Select Gender</option>
+                            <option>Male</option><option>Female</option><option>Other</option>
+                        </select>
+                    </div>
+                    <div><label>Date of Birth</label><input type="date" id="dob" required></div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title"><i class="fa-solid fa-address-book"></i> 2. Official Credentials</div>
+                <div class="form-grid">
+                    <div class="full-width"><label>Organization Name</label><input type="text" id="orgName" required></div>
+                    <div><label>Staff ID</label><input type="text" id="staffId" required></div>
+                    <div>
+                        <label>Designation</label>
+                        <select id="designation" required>
+                            <option value="">Select</option>
+                            <option>Election Officer</option>
+                            <option>System Admin</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title"><i class="fa-solid fa-key"></i> 3. Security</div>
+                <div class="form-grid">
+                    <div><label>Password</label><input type="password" id="p1" required></div>
+                    <div><label>Confirm Password</label><input type="password" id="p2" required></div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title"><i class="fa-solid fa-user-lock"></i> 4. Roles</div>
+                <select id="adminRole" required>
+                    <option value="">Select Role Type</option>
+                    <option>Super Admin</option>
+                    <option>Election Admin</option>
+                </select>
+                <div class="permission-grid" style="margin-top: 15px;">
+                    <div class="perm-item"><input type="checkbox" class="perm-check"> Voter Management</div>
+                    <div class="perm-item"><input type="checkbox" class="perm-check"> Candidate Setup</div>
+                    <div class="perm-item"><input type="checkbox" class="perm-check"> Result Control</div>
+                </div>
+            </div>
+
+            <div class="perm-item" style="margin-top: 20px;">
+                <input type="checkbox" id="consent" required> 
+                <label for="consent" style="margin:0; display:inline;">I agree to all Data Privacy Guidelines.</label>
+            </div>
+
+            <button type="button" class="btn-submit" id="reviewBtn" onclick="showSummary()">REVIEW & PROCEED</button>
+        </form>
+    </div>
+
+    <div id="verifyModal">
+        <div class="modal-card">
+            <div class="section-title">Review Submitted Details</div>
+            <div id="summaryContent" class="summary-grid">
+                </div>
+            <div class="modal-actions">
+                <button class="btn-edit" onclick="closeSummary()">EDIT DETAILS</button>
+                <button class="btn-proceed" onclick="finalizeRegistration()">FINALIZE ONBOARDING</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Image Preview
+        function previewImage(input) {
+            const preview = document.getElementById('photoPreview');
+            const camIcon = document.getElementById('camIcon');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}">`;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 2. Show Summary
+        function showSummary() {
+            const form = document.getElementById('adminRegForm');
+            if (!form.checkValidity()) {
+                alert("Please fill all required fields correctly.");
+                return;
+            }
+            if (document.getElementById('p1').value !== document.getElementById('p2').value) {
+                alert("Passwords do not match.");
+                return;
+            }
+
+            const summary = document.getElementById('summaryContent');
+            const data = {
+                "Full Name": document.getElementById('fullName').value,
+                "Username": document.getElementById('username').value,
+                "DOB": document.getElementById('dob').value,
+                "Organization": document.getElementById('orgName').value,
+                "Staff ID": document.getElementById('staffId').value,
+                "Designation": document.getElementById('designation').value,
+                "Admin Role": document.getElementById('adminRole').value
+            };
+
+            summary.innerHTML = "";
+            for (const [key, value] of Object.entries(data)) {
+                summary.innerHTML += `<div class="summary-item"><strong>${key}</strong>${value}</div>`;
+            }
+
+            document.getElementById('verifyModal').style.display = 'flex';
+        }
+
+        function closeSummary() {
+            document.getElementById('verifyModal').style.display = 'none';
+        }
+
+        // 3. Finalize and Save to Firebase
+        function finalizeRegistration() {
+            const username = document.getElementById('username').value;
+            const name = document.getElementById('fullName').value;
+
+            const adminData = {
+                fullName: name,
+                username: username,
+                dob: document.getElementById('dob').value,
+                orgName: document.getElementById('orgName').value,
+                staffId: document.getElementById('staffId').value,
+                designation: document.getElementById('designation').value,
+                role: document.getElementById('adminRole').value,
+                status: "Pending Approval",
+                timestamp: new Date().toLocaleString()
+            };
+
+            // Saving to 'admin_channel' node with Name as the key
+            database.ref('admin_channel/' + name).set(adminData)
+            .then(() => {
+                alert("ADMIN ONBOARDING INITIATED!\nWelcome, " + name);
+                window.location.href = "Admin.html";
+            })
+            .catch(err => alert("Registration Failed: " + err.message));
+        }
+    </script>
+</body>
+</html>
